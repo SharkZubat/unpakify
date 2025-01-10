@@ -16,7 +16,12 @@ def extract_pak_file(pak_file, output_folder):
                 # Read file entry metadata (adjust based on actual format)
                 entry_header = pak.read(24)  # Example entry size
                 file_name_size = struct.unpack('I', entry_header[:4])[0]
-                file_name = pak.read(file_name_size).decode('utf-8')
+                file_name_bytes = pak.read(file_name_size)
+
+                try:
+                    file_name = file_name_bytes.decode('utf-8')
+                except UnicodeDecodeError:
+                    file_name = file_name_bytes.decode('latin1')
 
                 # Create directories if needed
                 file_path = os.path.join(output_folder, file_name)
