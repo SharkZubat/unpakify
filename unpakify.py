@@ -20,6 +20,10 @@ def extract_pak_file(pak_file, output_folder):
 
                 # Create directories if needed
                 file_path = os.path.join(output_folder, file_name)
+                if file_name.endswith('/'):
+                    os.makedirs(file_path, exist_ok=True)
+                    continue
+
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
                 # Read and write file content
