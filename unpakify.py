@@ -1,17 +1,20 @@
 import os
 import sys
 import argparse
-import shutil
+import subprocess
 
 def extract_pak_file(pak_file, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     try:
-        # Assuming "unpakify" is a command line tool to extract .pak files
-        os.system(f'unpakify extract "{pak_file}" "{output_folder}"')
+        result = subprocess.run(['unpakify', 'extract', pak_file, output_folder], check=True, capture_output=True, text=True)
         print(f'Successfully extracted: {pak_file} to {output_folder}')
-    except Exception as e:
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
         print(f'Failed to extract {pak_file}: {e}')
+        print(e.stderr)
+    except FileNotFoundError:
+        print('Error: unpakify command not found. Make sure the unpakify tool is installed and available in your system\'s PATH.')
 
 def main():
     parser = argparse.ArgumentParser(description='Unpakify Tool to extract normal and corrupted pak files.')
