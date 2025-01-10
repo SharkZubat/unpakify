@@ -1,25 +1,32 @@
 import os
 import sys
 import argparse
+import struct
 
 def extract_pak_file(pak_file, output_folder):
     if not os.path.exists(output_folder):
         os.makedirs(output_folder)
     try:
-        # Open the pak file for reading
         with open(pak_file, 'rb') as pak:
-            # Implement actual extraction logic here
-            while True:
-                # Simulate reading and extracting file entries
-                # Replace with actual logic to read and extract entries from pak file
-                entry = pak.read(1024)  # Read in chunks
-                if not entry:
-                    break
+            # Read the pak file header (assuming a specific format, adjust as needed)
+            header = pak.read(12)  # Example header size
+            num_files = struct.unpack('I', header[8:12])[0]  # Example unpacking
 
-                # Determine the file path and content (This is just a placeholder logic)
-                entry_path = os.path.join(output_folder, "extracted_file")
-                with open(entry_path, 'wb') as out_file:
-                    out_file.write(entry)
+            for _ in range(num_files):
+                # Read file entry metadata (adjust based on actual format)
+                entry_header = pak.read(24)  # Example entry size
+                file_name_size = struct.unpack('I', entry_header[:4])[0]
+                file_name = pak.read(file_name_size).decode('utf-8')
+
+                # Create directories if needed
+                file_path = os.path.join(output_folder, file_name)
+                os.makedirs(os.path.dirname(file_path), exist_ok=True)
+
+                # Read and write file content
+                file_size = struct.unpack('I', entry_header[16:20])[0]  # Example unpacking
+                file_data = pak.read(file_size)
+                with open(file_path, 'wb') as out_file:
+                    out_file.write(file_data)
 
         print(f'Successfully extracted: {pak_file} to {output_folder}')
     except Exception as e:
