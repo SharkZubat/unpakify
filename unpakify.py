@@ -4,11 +4,9 @@ import argparse
 import struct
 
 def sanitize_file_name(file_name, max_length=255):
-    # Replace invalid characters with an underscore
-    sanitized_name = file_name.replace('\x00', '_')[:max_length]
-    # Further limit the length of the file name
-    sanitized_name = sanitized_name[:max_length]
-    print(f"Sanitized file name: {sanitized_name}")  # Add logging for file names
+    # Replace invalid characters with an underscore and limit length
+    sanitized_name = ''.join(c if c.isalnum() or c in (' ', '.', '_') else '_' for c in file_name)[:max_length]
+    print(f"Sanitized file name: {sanitized_name}")
     return sanitized_name
 
 def extract_pak_file(pak_file, output_folder):
