@@ -4,7 +4,9 @@ import argparse
 import struct
 
 def sanitize_file_name(file_name, max_length=255):
-    return file_name.replace('\x00', '')[:max_length]
+    sanitized_name = file_name.replace('\x00', '')[:max_length]
+    print(f"Sanitized file name: {sanitized_name}")  # Add logging for file names
+    return sanitized_name
 
 def extract_pak_file(pak_file, output_folder):
     if not os.path.exists(output_folder):
