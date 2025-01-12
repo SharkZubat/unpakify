@@ -4,7 +4,10 @@ import argparse
 import struct
 
 def sanitize_file_name(file_name, max_length=255):
-    sanitized_name = file_name.replace('\x00', '')[:max_length]
+    # Replace invalid characters with an underscore
+    sanitized_name = file_name.replace('\x00', '_')[:max_length]
+    # Further limit the length of the file name
+    sanitized_name = sanitized_name[:max_length]
     print(f"Sanitized file name: {sanitized_name}")  # Add logging for file names
     return sanitized_name
 
