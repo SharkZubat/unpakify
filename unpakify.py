@@ -27,9 +27,14 @@ def extract_pak_file(pak_file, output_folder, max_length=255):
                 if len(entry_header) < 24:
                     raise Exception("Entry header too small")
                 file_name_size = struct.unpack('I', entry_header[:4])[0]
+                if file_name_size > 1000:  # Adjust this threshold as needed
+                    print(f"Warning: Unusually large file name size ({file_name_size} bytes). Skipping entry.")
+                    pak.seek(20, os.SEEK_CUR)  # Skip the rest of the entry
+                    continue
                 file_name_bytes = pak.read(file_name_size)
                 if len(file_name_bytes) < file_name_size:
-                    raise Exception("File name bytes too small")
+                    print(f"Warning: Expected {file_name_size} bytes for file name but got {len(file_name_bytes)} bytes. Skipping entry.")
+                    continue
 
                 try:
                     file_name = file_name_bytes.decode('utf-8')
@@ -52,7 +57,8 @@ def extract_pak_file(pak_file, output_folder, max_length=255):
                 file_size = struct.unpack('I', entry_header[16:20])[0]
                 file_data = pak.read(file_size)
                 if len(file_data) < file_size:
-                    raise Exception("File data too small")
+                    print(f"Warning: Expected {file_size} bytes for file data but got {len(file_data)} bytes. Skipping entry.")
+                    continue
                 with open(file_path, 'wb') as out_file:
                     out_file.write(file_data)
 
@@ -64,9 +70,9 @@ def main():
     parser = argparse.ArgumentParser(description='Unpakify Tool to extract normal and corrupted pak files.')
     parser.add_argument('-c', '--check', help='Pak file to be extracted', required=True)
     parser.add_argument('-f', '--folder', help='New folder name for extraction', required=False)
-    
+
     args = parser.parse_args()
-    
+
     pak_file = args.check
     if not args.folder:
         output_folder = os.path.splitext(pak_file)[0]
