@@ -2,11 +2,12 @@ import os
 import sys
 import argparse
 import struct
+import string
 
 def sanitize_file_name(file_name, max_length=255):
-    # Replace invalid characters with an underscore and limit length
-    sanitized_name = ''.join(c if c.isalnum() or c in (' ', '.', '_') else '_' for c in file_name)[:max_length]
-    sanitized_name = sanitized_name[:max_length]
+    valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
+    sanitized_name = ''.join(c if c in valid_chars else '_' for c in file_name)
+    sanitized_name = sanitized_name[:max_length].rstrip(". ")
     print(f"Sanitized file name: {sanitized_name}")
     return sanitized_name
 
@@ -15,14 +16,12 @@ def extract_pak_file(pak_file, output_folder, max_length=255):
         os.makedirs(output_folder)
     try:
         with open(pak_file, 'rb') as pak:
-            # Read the pak file header (assuming a specific format, adjust as needed)
             header = pak.read(12)
             if len(header) < 12:
                 raise Exception("Header too small")
             num_files = struct.unpack('I', header[8:12])[0]
 
             for _ in range(num_files):
-                # Read file entry metadata (adjust based on actual format)
                 entry_header = pak.read(24)
                 if len(entry_header) < 24:
                     raise Exception("Entry header too small")
@@ -43,7 +42,6 @@ def extract_pak_file(pak_file, output_folder, max_length=255):
 
                 file_name = sanitize_file_name(file_name, max_length)
 
-                # Ensure the file path is within acceptable limits
                 file_path = os.path.join(output_folder, file_name)
                 if len(file_path) > 255:
                     file_path = file_path[:255]
@@ -53,14 +51,15 @@ def extract_pak_file(pak_file, output_folder, max_length=255):
 
                 os.makedirs(os.path.dirname(file_path), exist_ok=True)
 
-                # Read and write file content
                 file_size = struct.unpack('I', entry_header[16:20])[0]
-                file_data = pak.read(file_size)
-                if len(file_data) < file_size:
-                    print(f"Warning: Expected {file_size} bytes for file data but got {len(file_data)} bytes. Skipping entry.")
-                    continue
                 with open(file_path, 'wb') as out_file:
-                    out_file.write(file_data)
+                    while file_size > 0:
+                        chunk_size = min(file_size, 1024 * 1024)  # Read in 1MB chunks
+                        file_data = pak.read(chunk_size)
+                        if not file_data:
+                            raise Exception("File data too small")
+                        out_file.write(file_data)
+                        file_size -= len(file_data)
 
         print(f'Successfully extracted: {pak_file} to {output_folder}')
     except Exception as e:
@@ -70,9 +69,9 @@ def main():
     parser = argparse.ArgumentParser(description='Unpakify Tool to extract normal and corrupted pak files.')
     parser.add_argument('-c', '--check', help='Pak file to be extracted', required=True)
     parser.add_argument('-f', '--folder', help='New folder name for extraction', required=False)
-
+    
     args = parser.parse_args()
-
+    
     pak_file = args.check
     if not args.folder:
         output_folder = os.path.splitext(pak_file)[0]
