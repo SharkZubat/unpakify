@@ -3,8 +3,8 @@ import sys
 import argparse
 import struct
 
-def sanitize_file_name(file_name):
-    return file_name.replace('\x00', '')
+def sanitize_file_name(file_name, max_length=255):
+    return file_name.replace('\x00', '')[:max_length]
 
 def extract_pak_file(pak_file, output_folder):
     if not os.path.exists(output_folder):
@@ -50,9 +50,9 @@ def main():
     parser = argparse.ArgumentParser(description='Unpakify Tool to extract normal and corrupted pak files.')
     parser.add_argument('-c', '--check', help='Pak file to be extracted', required=True)
     parser.add_argument('-f', '--folder', help='New folder name for extraction', required=False)
-    
+
     args = parser.parse_args()
-    
+
     pak_file = args.check
     if not args.folder:
         output_folder = os.path.splitext(pak_file)[0]
